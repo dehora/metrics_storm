@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-log4j12" % "1.6.4",
   "com.yammer.metrics" % "metrics-core" % "2.1.2",
   "com.yammer.metrics" % "metrics-servlet" % "2.1.2",
+  "com.yammer.metrics" % "metrics-graphite" % "2.1.2",
   "javax.servlet" % "servlet-api" % "2.5"
 )
 

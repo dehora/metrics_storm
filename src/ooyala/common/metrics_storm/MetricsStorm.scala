@@ -6,11 +6,13 @@ import java.util.concurrent.TimeUnit
 
 import backtype.storm.task.TopologyContext
 import com.yammer.metrics.util.DeadlockHealthCheck
-import com.yammer.metrics.reporting.{MetricsServlet, ThreadDumpServlet, HealthCheckServlet}
+import com.yammer.metrics.reporting.{GraphiteReporter, MetricsServlet, ThreadDumpServlet, HealthCheckServlet}
 import com.yammer.metrics.{Metrics, HealthChecks}
 import com.yammer.metrics.core.{MetricName, Meter}
 import org.mortbay.jetty.Server
 import org.mortbay.jetty.servlet.Context
+import org.slf4j.{LoggerFactory, Logger}
+
 
 // TODO(ev): Move this into ScalaStorm
 package object config {
@@ -28,6 +30,23 @@ package object config {
       else
         Nil
     }
+
+    // todo: getOrElse
+    def getIntOrElse(key: String, default: Int): Int = {
+      if (accessibleConfig.containsKey(key))  {
+        accessibleConfig.get(key).asInstanceOf[Int] //let it kaboom if the type's wrong
+      } else {
+        default
+      }
+    }
+
+    def getStringOrElse(key: String, default: String): String = {
+      if (accessibleConfig.containsKey(key))  {
+        accessibleConfig.get(key).asInstanceOf[String]
+      } else {
+        default
+      }
+    }
   }
 
   implicit def toScalaStormConfig(config: StormConfigMap) = new StormConfig(config)
@@ -44,7 +63,10 @@ package object config {
  * - emits - the rate and count of tuples emitted by this bolt
  */
 object MetricsStorm {
+
   import config._
+
+  val log:Logger = LoggerFactory.getLogger(classOf[MetricsStormHooks])
 
   // Default port if one above cannot be found
   val DefaultPort = 7070
@@ -129,5 +151,21 @@ object MetricsStorm {
       getMetricName("acks", context), "acks", TimeUnit.SECONDS)
     emitMeters(context.getThisTaskId) = Metrics.newMeter(
       getMetricName("emits", context), "emits", TimeUnit.SECONDS)
+  }
+
+  /**
+   * Register against graphite.
+   *
+   * @param context for the topology
+   */
+  def setupGraphiteReporter(conf: StormConfigMap, context: TopologyContext) {
+    val port = conf getIntOrElse("graphite.conf.port", 2003)
+    val period = conf getIntOrElse("graphite.conf.period", 60)
+    val host = conf.getStringOrElse("graphite.conf.host", "localhost")
+    val prefix = conf.getStringOrElse("graphite.conf.prefix", "storm")
+    log.info("graphite.conf: port:"+port+" period:"+period+" host:"+host+" prefix:"+prefix)
+    val reporter = new GraphiteReporter(host, port, prefix)
+    reporter.start(period, TimeUnit.SECONDS)
+    log.info("graphite.conf: reporter started")
   }
 }
