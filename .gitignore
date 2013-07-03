@@ -1,3 +1,7 @@
+*.iml
+*.ipr
+*.iws
+
 # Standard sbt ignores
 target/
 src_managed/
