@@ -33,6 +33,17 @@ Set the following parameter in storm.yaml, listing one port per supervisor.slot.
 
 If this parameter is not set, the web console port defaults to 7070.
 
+Graphite Configuration
+=========================
+
+To send metrics to graphite set the following (the values below show the defaults):
+
+    graphite.conf.port: 2003
+    graphite.conf.period: 60
+    graphite.conf.host: localhost
+    graphite.conf.prefix: storm
+
+
 Building
 ========
 
